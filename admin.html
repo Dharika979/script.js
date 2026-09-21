@@ -1,0 +1,128 @@
+from flask import Flask
+import sqlite3
+
+app = Flask(__name__)
+
+
+def get_db():
+    conn = sqlite3.connect("marketplace.db")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+@app.route("/")
+def home():
+    return """
+    <h1>Sustainable Product Marketplace</h1>
+    <p>Welcome to the Marketplace</p>
+    <a href="/admin">Admin Panel</a>
+    """
+
+
+@app.route("/admin")
+def admin():
+
+    conn = get_db()
+
+    users = conn.execute(
+        "SELECT * FROM users"
+    ).fetchall()
+
+    products = conn.execute(
+        "SELECT * FROM products"
+    ).fetchall()
+
+    orders = conn.execute(
+        "SELECT * FROM orders"
+    ).fetchall()
+
+    conn.close()
+
+    page = """
+    <html>
+    <head>
+        <title>Admin Panel</title>
+    </head>
+
+    <body>
+
+        <h1>Admin Dashboard</h1>
+
+        <h2>Users</h2>
+        <table border="1">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+            </tr>
+    """
+
+    for user in users:
+        page += f"""
+            <tr>
+                <td>{user['UserID']}</td>
+                <td>{user['FullName']}</td>
+                <td>{user['Email']}</td>
+                <td>{user['Role']}</td>
+            </tr>
+        """
+
+    page += """
+        </table>
+
+        <h2>Products</h2>
+        <table border="1">
+            <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Stock</th>
+            </tr>
+    """
+
+    for product in products:
+        page += f"""
+            <tr>
+                <td>{product['ProductID']}</td>
+                <td>{product['ProductName']}</td>
+                <td>₹{product['Price']}</td>
+                <td>{product['StockQuantity']}</td>
+            </tr>
+        """
+
+    page += """
+        </table>
+
+        <h2>Orders</h2>
+        <table border="1">
+            <tr>
+                <th>Order ID</th>
+                <th>User ID</th>
+                <th>Total</th>
+                <th>Status</th>
+            </tr>
+    """
+
+    for order in orders:
+        page += f"""
+            <tr>
+                <td>{order['OrderID']}</td>
+                <td>{order['UserID']}</td>
+                <td>₹{order['TotalAmount']}</td>
+                <td>{order['Status']}</td>
+            </tr>
+        """
+
+    page += """
+        </table>
+
+    </body>
+    </html>
+    """
+
+    return page
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
